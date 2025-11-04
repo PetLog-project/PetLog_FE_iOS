@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/dongharyu/ios-Dev/PetLog_iOS/build/Release-iphoneos/PetLog_iOS.app/PetLog_iOS'
+relocations:     []
+...

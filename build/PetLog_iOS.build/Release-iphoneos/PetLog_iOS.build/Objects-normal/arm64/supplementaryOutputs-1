@@ -1,0 +1,12 @@
+{
+  "/Users/dongharyu/ios-Dev/PetLog_iOS/PetLog_iOS/ContentView.swift" : {
+    "abi-baseline-json" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS.abi.json",
+    "const-values" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary.swiftconstvalues",
+    "dependencies" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary.d",
+    "diagnostics" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary.dia",
+    "objc-header" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-Swift.h",
+    "swiftdoc" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS.swiftdoc",
+    "swiftmodule" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS.swiftmodule",
+    "swiftsourceinfo" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS.swiftsourceinfo"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "" : {
+    "const-values" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary.swiftconstvalues",
+    "dependencies" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary.d",
+    "diagnostics" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary.dia",
+    "emit-module-dependencies" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary-emit-module.dia",
+    "pch" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOS-primary.swiftdeps"
+  },
+  "/Users/dongharyu/ios-Dev/PetLog_iOS/PetLog_iOS/ContentView.swift" : {
+    "index-unit-output-path" : "/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/ContentView.o"
+  },
+  "/Users/dongharyu/ios-Dev/PetLog_iOS/PetLog_iOS/HomeModels 2.swift" : {
+    "index-unit-output-path" : "/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeModels 2.o",
+    "llvm-bc" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeModels 2.bc",
+    "object" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeModels 2.o"
+  },
+  "/Users/dongharyu/ios-Dev/PetLog_iOS/PetLog_iOS/HomeModels.swift" : {
+    "index-unit-output-path" : "/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeModels.o",
+    "llvm-bc" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeModels.bc",
+    "object" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeModels.o"
+  },
+  "/Users/dongharyu/ios-Dev/PetLog_iOS/PetLog_iOS/HomeViewModel.swift" : {
+    "index-unit-output-path" : "/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeViewModel.o",
+    "llvm-bc" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeViewModel.bc",
+    "object" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/HomeViewModel.o"
+  },
+  "/Users/dongharyu/ios-Dev/PetLog_iOS/PetLog_iOS/PetLog_iOSApp.swift" : {
+    "index-unit-output-path" : "/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOSApp.o",
+    "llvm-bc" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOSApp.bc",
+    "object" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/PetLog_iOSApp.o"
+  },
+  "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/dongharyu/ios-Dev/PetLog_iOS/build/PetLog_iOS.build/Release-iphoneos/PetLog_iOS.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}

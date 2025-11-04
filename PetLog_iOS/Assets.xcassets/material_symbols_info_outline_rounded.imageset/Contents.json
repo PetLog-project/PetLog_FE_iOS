@@ -1,0 +1,15 @@
+{
+  "images" : [
+    {
+      "filename" : "material_symbols_info_outline_rounded.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "properties" : {
+    "preserves-vector-representation" : true
+  }
+}
