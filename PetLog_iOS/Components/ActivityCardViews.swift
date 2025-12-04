@@ -26,15 +26,6 @@ struct SwipeableActivityCards: View {
     @State private var feedingCompleted = false
     @State private var wateringCompleted = false
     @State private var poopCompleted = false
-    @State private var currentTime = Date()
-    
-    // Updated memos and poop count
-    @State private var feedingMemo: String
-    @State private var wateringMemo: String
-    @State private var poopMemo: String
-    @State private var poopCount: Int
-    
-    let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     init(
         feedingData: Feeding,
@@ -50,11 +41,6 @@ struct SwipeableActivityCards: View {
         self._showFeedingModal = showFeedingModal
         self._showWateringModal = showWateringModal
         self._showPoopModal = showPoopModal
-        
-        _feedingMemo = State(initialValue: feedingData.lastMemo)
-        _wateringMemo = State(initialValue: wateringData.lastMemo)
-        _poopMemo = State(initialValue: poopData.lastMemo)
-        _poopCount = State(initialValue: poopData.todayPoopCount)
     }
     
     private var cards: [ActivityCardType] {
@@ -64,7 +50,7 @@ struct SwipeableActivityCards: View {
         return [
             feedingCard,
             wateringCard,
-            .poop(count: poopCount)
+            .poop(count: poopData.todayPoopCount)
         ]
     }
     
@@ -74,7 +60,7 @@ struct SwipeableActivityCards: View {
         }
         
         let nextFeedingTime = feedingData.lastFeedingTime.addingTimeInterval(TimeInterval(feedingData.feedingCycle * 3600))
-        let timeInterval = nextFeedingTime.timeIntervalSince(currentTime)
+        let timeInterval = nextFeedingTime.timeIntervalSince(Date())
         
         if timeInterval > 0 {
             // Before feeding time - shouldn't show this initially, only after completion
@@ -99,7 +85,7 @@ struct SwipeableActivityCards: View {
         }
         
         let nextWateringTime = wateringData.lastWateringTime.addingTimeInterval(TimeInterval(wateringData.wateringCycle * 3600))
-        let timeInterval = nextWateringTime.timeIntervalSince(currentTime)
+        let timeInterval = nextWateringTime.timeIntervalSince(Date())
         
         if timeInterval > 0 {
             // Before watering time
@@ -128,9 +114,9 @@ struct SwipeableActivityCards: View {
                             feedingData: feedingData,
                             wateringData: wateringData,
                             poopData: poopData,
-                            feedingMemo: feedingMemo,
-                            wateringMemo: wateringMemo,
-                            poopMemo: poopMemo,
+                            feedingMemo: feedingData.lastMemo,
+                            wateringMemo: wateringData.lastMemo,
+                            poopMemo: poopData.lastMemo,
                             onFeedingButtonTap: { showFeedingModal = true },
                             onWateringButtonTap: { showWateringModal = true },
                             onPoopButtonTap: { showPoopModal = true }
@@ -144,9 +130,6 @@ struct SwipeableActivityCards: View {
                     }
                 }
                 .frame(width: geometry.size.width, height: 328)
-                .onReceive(timer) { _ in
-                    currentTime = Date()
-                }
                 .gesture(
                     DragGesture()
                         .onChanged { value in
@@ -169,6 +152,23 @@ struct SwipeableActivityCards: View {
                     }
                 }
             }
+        }
+        // 강제 리렌더링 - 부모 데이터 변경 시 전체 뷰 재구성
+        .id("\(feedingData.lastFeedingTime)-\(feedingData.lastMemo)-\(wateringData.lastWateringTime)-\(wateringData.lastMemo)-\(poopData.todayPoopCount)-\(poopData.lastMemo)")
+        .onChange(of: feedingData) { oldValue, newValue in
+            print("🔔 SwipeableActivityCards: feedingData changed")
+            print("   Old memo: \(oldValue.lastMemo ?? "nil"), New memo: \(newValue.lastMemo)")
+            print("   Old time: \(oldValue.lastFeedingTime ?? Date()), New time: \(newValue.lastFeedingTime)")
+        }
+        .onChange(of: wateringData) { oldValue, newValue in
+            print("🔔 SwipeableActivityCards: wateringData changed")
+            print("   Old memo: \(oldValue.lastMemo ?? "nil"), New memo: \(newValue.lastMemo)")
+            print("   Old time: \(oldValue.lastWateringTime ?? Date()), New time: \(newValue.lastWateringTime)")
+        }
+        .onChange(of: poopData) { oldValue, newValue in
+            print("🔔 SwipeableActivityCards: poopData changed")
+            print("   Old count: \(oldValue.todayPoopCount ?? 0), New count: \(newValue.todayPoopCount)")
+            print("   Old memo: \(oldValue.lastMemo ?? "nil"), New memo: \(newValue.lastMemo)")
         }
     }
 }
@@ -421,3 +421,4 @@ struct ActivityCardView: View {
         }
     }
 }
+

@@ -123,9 +123,13 @@ struct APITestView: View {
         
         Task {
             do {
-                let response = try await apiService.getMyGroup()
+                guard let groupId = UserDefaults.standard.string(forKey: "groupId") else {
+                    throw APIError.serverError(statusCode: 404, message: "그룹 ID 없습니다.")
+                }
+                
+                let petInfo = try await apiService.getPetInfo(groupId: groupId)
                 await MainActor.run {
-                    status = "✅ 성공!\n이름: \(response.data.profile.name)\n나이: \(response.data.profile.age)"
+                    status = "✅ 성공!\n이름: \(petInfo.name)\n나이: \(petInfo.age)"
                     isLoading = false
                 }
             } catch let error as APIError {
@@ -148,25 +152,26 @@ struct APITestView: View {
         
         Task {
             do {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
+                dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+                let now = dateFormatter.string(from: Date())
+                
                 let request = CreateGroupRequest(
                     imageUrl: "https://example.com/pet.jpg",
                     name: "테스트반려동물",
-                    age: "2살",
-                    weight: "5.5kg",
+                    age: "1살",
+                    weight: "2kg",
                     gender: "FEMALE",
                     feedingCycle: 6,
-                    lastFeedingTime: PetLogAPIService.formatDate(Date()),
+                    lastFeedingTime: now,
                     wateringCycle: 6,
-                    lastWateringTime: PetLogAPIService.formatDate(Date()),
-                    notice: "테스트 특이사항"
+                    lastWateringTime: now,
+                    note: "테스트"
                 )
                 _ = try await apiService.createGroup(request: request)
-                // Fetch newly assigned groupId then invite code
-                let me = try await AuthAPIService.shared.getCurrentUser()
-                let code = try await PetLogAPIService.shared.getInviteCode(groupId: me.groupId ?? "")
                 await MainActor.run {
-                    status = "✅ 그룹 생성 성공!\n참여 코드: \(code)"
-                    joinCode = code
+                    status = "✅ 그룹 생성 성공!"
                     isLoading = false
                 }
             } catch let error as APIError {
@@ -189,9 +194,9 @@ struct APITestView: View {
         
         Task {
             do {
-                let response = try await apiService.joinGroup(joinCode: joinCode)
+                let groupData = try await apiService.joinGroup(inviteCode: joinCode)
                 await MainActor.run {
-                    status = "✅ 그룹 참여 성공!\n\(response.message)"
+                    status = "✅ 그룹 참여 성공!\nGroupId: \(groupData.groupId)"
                     isLoading = false
                 }
             } catch let error as APIError {
@@ -214,7 +219,10 @@ struct APITestView: View {
         
         Task {
             do {
-                let note = try await apiService.getNotes()
+                guard let groupId = UserDefaults.standard.string(forKey: "groupId") else {
+                    throw APIError.serverError(statusCode: 404, message: "그룹 ID 없습니다.")
+                }
+                let note = try await apiService.getNote(groupId: groupId)
                 await MainActor.run {
                     status = "✅ 조회 성공!\n\(note ?? "<없음>")"
                     isLoading = false

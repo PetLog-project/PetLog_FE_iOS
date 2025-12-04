@@ -135,27 +135,58 @@ struct NotesView: View {
     
     // MARK: - Actions
     private func loadNotes() {
+        guard let groupId = UserDefaults.standard.string(forKey: "groupId") else {
+            print("❌ No groupId found")
+            return
+        }
+        print("📝 Loading notes for groupId: \(groupId)")
+        
         isLoading = true
         errorMessage = nil
         
         Task {
             do {
-                let note = try await apiService.getNotes()
+                print("📤 Calling getNote API...")
+                let note = try await apiService.getNote(groupId: groupId)
                 await MainActor.run {
-                    notes = note ?? ""
+                    // Workaround: If backend returns nil but we have local notes, keep them
+                    // (Backend issue: GET returns nil even after PATCH save)
+                    if note == nil && !notes.isEmpty {
+                        print("⚠️ Backend returned nil, but keeping local notes in memory")
+                    } else {
+                        notes = note ?? ""
+                    }
                     isLoading = false
+                    if let note = note {
+                        print("✅ Notes loaded successfully: \(note.count) characters")
+                        print("📝 Content: \(note)")
+                    } else {
+                        print("✅ Notes loaded: (nil/empty)")
+                    }
                 }
             } catch {
                 await MainActor.run {
-                    // If no notes exist (404), just show empty
-                    notes = ""
+                    // Keep existing notes on error
                     isLoading = false
+                    if let apiError = error as? APIError {
+                        print("❌ Notes load failed - APIError: \(apiError.localizedDescription)")
+                    } else {
+                        print("❌ Notes load failed - Error: \(error)")
+                    }
                 }
             }
         }
     }
     
     private func saveNotes() {
+        guard let groupId = UserDefaults.standard.string(forKey: "groupId") else {
+            print("❌ No groupId found")
+            return
+        }
+        
+        print("📝 Saving notes for groupId: \(groupId)")
+        print("📝 Content: \(notes.isEmpty ? "(empty)" : notes)")
+        
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         
@@ -164,16 +195,25 @@ struct NotesView: View {
         Task {
             do {
                 // Update (send nil to delete)
-                try await apiService.updateNotes(content: notes.isEmpty ? nil : notes)
+                print("📤 Calling updateNote API...")
+                try await apiService.updateNote(groupId: groupId, content: notes.isEmpty ? nil : notes)
                 
                 await MainActor.run {
+                    print("✅ Notes saved successfully")
                     isEditing = false
                     isTextFieldFocused = false
                     isLoading = false
                 }
-            } catch {
+                
+                // Reload notes after save (in case backend doesn't return it in update response)
+                try await Task.sleep(nanoseconds: 300_000_000) // 0.3 second delay
                 await MainActor.run {
-                    errorMessage = "저장에 실패했습니다."
+                    loadNotes()
+                }
+            } catch {
+                print("❌ Failed to save notes: \(error)")
+                await MainActor.run {
+                    errorMessage = "저장에 실패했습니다: \(error)"
                     isLoading = false
                 }
             }

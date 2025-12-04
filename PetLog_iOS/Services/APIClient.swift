@@ -65,7 +65,7 @@ class APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         // Add Authorization header if token exists
-        if let token = UserDefaults.standard.string(forKey: "authToken") {
+        if let token = UserDefaults.standard.string(forKey: "accessToken") {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -81,6 +81,20 @@ class APIClient {
         // Execute request
         do {
             let (data, response) = try await session.data(for: request)
+            
+            // Log request/response for debugging
+            if request.httpMethod == "PATCH" {
+                print("🔵 [APIClient] PATCH Request:")
+                print("   URL: \(url.absoluteString)")
+                if let body = request.httpBody,
+                   let bodyStr = String(data: body, encoding: .utf8) {
+                    print("   Body: \(bodyStr)")
+                }
+                print("   Response status: \((response as? HTTPURLResponse)?.statusCode ?? 0)")
+                if let responseStr = String(data: data, encoding: .utf8) {
+                    print("   Response body: \(responseStr)")
+                }
+            }
             
             // Check HTTP response
             guard let httpResponse = response as? HTTPURLResponse else {
@@ -123,7 +137,7 @@ class APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         // Add Authorization header if token exists
-        if let token = UserDefaults.standard.string(forKey: "authToken") {
+        if let token = UserDefaults.standard.string(forKey: "accessToken") {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         

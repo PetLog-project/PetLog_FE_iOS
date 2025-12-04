@@ -2,7 +2,7 @@
 //  SignupView.swift
 //  PetLog_iOS
 //
-//  Created by Agent on 11/02/25.
+//  Created by DonghaRyu on 11/02/25.
 //
 
 import SwiftUI

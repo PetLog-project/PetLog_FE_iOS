@@ -2,14 +2,14 @@
 //  LoginView.swift
 //  PetLog_iOS
 //
-//  Created by Agent on 11/02/25.
+//  Created by DonghaRyu on 11/02/25.
 //
 
 import SwiftUI
-import AuthenticationServices
+// Apple Sign In removed for now (no paid account)
 
 struct LoginView: View {
-    @StateObject private var authViewModel = AuthViewModel()
+    @EnvironmentObject private var authViewModel: AuthViewModel
     
     var body: some View {
         ZStack {
@@ -39,7 +39,7 @@ struct LoginView: View {
                 Spacer()
                 
                 // Login Buttons Section
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     // Kakao Login Button
                     Button(action: {
                         authViewModel.loginWithKakao()
@@ -47,32 +47,23 @@ struct LoginView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "message.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(.black)
+                                .foregroundColor(Theme.Colors.kakaoBlack)
                             
                             Text("카카오톡으로 시작하기")
                                 .font(Theme.Typography.boldM)
-                                .foregroundColor(.black)
+                                .foregroundColor(Theme.Colors.kakaoBlack)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(Color(red: 0.996, green: 0.898, blue: 0))
+                        .background(Theme.Colors.kakaoYellow)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .disabled(authViewModel.isLoading)
                     
-                    // Apple Login Button
-                    SignInWithAppleButton(.signIn) { request in
-                        request.requestedScopes = [.email, .fullName]
-                    } onCompletion: { result in
-                        authViewModel.handleAppleLoginCompletion(result: result)
-                    }
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: 56)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .disabled(authViewModel.isLoading)
+                    // Apple Login temporarily removed (requires paid Apple Developer account)
                     
                     // Test Login Button (for development/simulator)
-                    #if DEBUG
+#if DEBUG
                     Button(action: {
                         authViewModel.loginWithTestAccount()
                     }) {
@@ -93,8 +84,8 @@ struct LoginView: View {
                     .disabled(authViewModel.isLoading)
                     #endif
                 }
-                .padding(.horizontal, 32)
-                
+                .padding(.horizontal, 24)
+
                 // Terms and Privacy Section
                 HStack(spacing: 8) {
                     Text("계속 진행하면")
@@ -121,7 +112,7 @@ struct LoginView: View {
                         .font(Theme.Typography.bodyXS)
                         .foregroundColor(Theme.Colors.secondaryText)
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 24)
                 
                 // Loading Indicator
                 if authViewModel.isLoading {

@@ -1,0 +1,12 @@
+//
+//  Config.xcconfig
+//  PetLog_iOS
+//
+//  Created by Dongha Ryu on 11/7/25.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+KAKAO_NATIVE_APP_KEY = 0db0066e2fba9d003e058dea7bf2c96a
+API_BASE_URL = https://dev.petlog.site

@@ -6,10 +6,10 @@ enum Gender: String, Codable, Equatable {
 }
 
 struct Profile: Codable, Equatable {
-    let imageUrl: String
+    let imageUrl: String?
     var name: String
     var age: String
-    var weight: Double  // Changed from String to Double to match API
+    var weight: Double  
     var gender: Gender
     
     // Computed property for display
@@ -38,7 +38,7 @@ struct Poop: Codable, Equatable {
     var lastMemo: String
 }
 
-struct HomeData: Codable, Equatable {
+struct PetDashboardData: Codable, Equatable {
     var profile: Profile
     var feeding: Feeding
     var watering: Watering
@@ -46,16 +46,16 @@ struct HomeData: Codable, Equatable {
     let joinCode: String
 }
 
-struct HomeResponse: Codable, Equatable {
-    let statusCode: Int
+struct PetDashboardResponse: Codable, Equatable {
+    let code: Int
     let message: String
-    let data: HomeData
+    let data: PetDashboardData
 }
 
-enum HomeModels {
+enum PetDashboardSamples {
     static let sampleJSONString = """
     {
-        "statusCode" : 200,
+        "code" : 200,
         "message":"반려동물 정보 조회에 성공했습니다.",
         "data" : {
             "profile" : {
@@ -91,7 +91,7 @@ enum HomeModels {
         return Data(sampleJSONString.utf8)
     }
 
-    static func loadSample() throws -> HomeData {
+    static func loadSample() throws -> PetDashboardData {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
@@ -117,6 +117,6 @@ enum HomeModels {
 
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date string: \(dateString)")
         }
-        return try decoder.decode(HomeData.self, from: sampleData)
+        return try decoder.decode(PetDashboardData.self, from: sampleData)
     }
 }

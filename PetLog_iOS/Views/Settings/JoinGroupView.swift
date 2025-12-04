@@ -142,18 +142,20 @@ struct JoinGroupView: View {
         Task {
             do {
                 print("DEBUG: Calling API...")
-                let response = try await PetLogAPIService.shared.joinGroup(joinCode: joinCode.uppercased())
-                print("DEBUG: API response - statusCode: \(response.statusCode), message: \(response.message)")
+                let groupData = try await PetLogAPIService.shared.joinGroup(inviteCode: joinCode.uppercased())
+                print("DEBUG: API response - groupId: \(groupData.groupId)")
                 
                 await MainActor.run {
                     isLoading = false
-                    if response.statusCode == 200 {
-                        print("DEBUG: Showing success alert")
-                        showSuccessAlert = true
-                    } else {
-                        print("DEBUG: Showing error: \(response.message)")
-                        errorMessage = response.message
-                    }
+                    let oldGroupId = UserDefaults.standard.string(forKey: "groupId")
+                    print("🔑 Before join - Current groupId: \(oldGroupId ?? "nil")")
+                    
+                    // Use groupId from response
+                    UserDefaults.standard.set(groupData.groupId, forKey: "groupId")
+                    print("🔑 Joined group with groupId: \(groupData.groupId)")
+                    print("🔑 Changed from \(oldGroupId ?? "nil") to \(groupData.groupId)")
+                    
+                    showSuccessAlert = true
                 }
             } catch {
                 print("DEBUG: API Error: \(error)")

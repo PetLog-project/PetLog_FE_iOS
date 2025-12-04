@@ -103,6 +103,8 @@ struct ShareInvitePopup: View {
             )
         }
         .onAppear {
+            print("📲 ShareInvitePopup appeared")
+            print("   inviteCode: \(inviteCode ?? "nil")")
             // If invite code is not provided but pet data is, generate it
             if inviteCode == nil, let petData = petData {
                 generateInviteCode(with: petData)
@@ -122,9 +124,14 @@ struct ShareInvitePopup: View {
             do {
                 print("🔵 Attempting to create group with data: \(petData)")
                 _ = try await PetLogAPIService.shared.createGroup(request: petData)
-                // Fetch current user to get groupId, then invite code
-                let me = try await AuthAPIService.shared.getCurrentUser()
-                let code = try await PetLogAPIService.shared.getInviteCode(groupId: me.groupId ?? "")
+                // Fetch my groups to get groupId, then invite code
+                let myGroups = try await PetLogAPIService.shared.getMyGroups()
+                guard let groupId = myGroups.first else {
+                    throw APIError.serverError(statusCode: 500, message: "Failed to get groupId after creation")
+                }
+                UserDefaults.standard.set(groupId, forKey: "groupId")
+                print("✅ GroupId saved after group creation: \(groupId)")
+                let code = try await PetLogAPIService.shared.getInviteCode(groupId: groupId)
                 print("✅ Group created, invite code fetched: \(code)")
                 await MainActor.run {
                     generatedCode = code
@@ -172,6 +179,7 @@ struct ProfileEditPopup: View {
     @Binding var weight: Double
     @Binding var gender: Gender?
     @Binding var profileImage: UIImage?
+    @Binding var selectedTab: Int  // Add selectedTab binding
     
     @State private var editedName: String
     @State private var editedAge: String
@@ -182,6 +190,7 @@ struct ProfileEditPopup: View {
     @State private var showNameError = false
     @State private var showAgeError = false
     @State private var showWeightError = false
+    @State private var isSavingImage = false
     
     init(
         isPresented: Binding<Bool>,
@@ -189,7 +198,8 @@ struct ProfileEditPopup: View {
         age: Binding<String>,
         weight: Binding<Double>,
         gender: Binding<Gender?>,
-        profileImage: Binding<UIImage?>
+        profileImage: Binding<UIImage?>,
+        selectedTab: Binding<Int>
     ) {
         self._isPresented = isPresented
         self._name = name
@@ -197,6 +207,7 @@ struct ProfileEditPopup: View {
         self._weight = weight
         self._gender = gender
         self._profileImage = profileImage
+        self._selectedTab = selectedTab
         
         // Initialize state with current values
         self._editedName = State(initialValue: name.wrappedValue)
@@ -318,17 +329,24 @@ struct ProfileEditPopup: View {
                     Button {
                         saveChanges()
                     } label: {
-                        Text("확인")
-                            .font(Theme.Typography.boldM)
-                            .foregroundColor(Theme.Colors.text)
-                            .frame(width: 100, height: 40)
+                        if isSavingImage {
+                            ProgressView()
+                                .tint(.black)
+                        } else {
+                            Text("확인")
+                                .font(Theme.Typography.boldM)
+                                .foregroundColor(Theme.Colors.text)
+                        }
+                        Spacer()
                     }
+                    .frame(width: 100, height: 40)
                     .background(Theme.Colors.mainYellow)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)
                             .stroke(Theme.Colors.black, lineWidth: 1)
                     )
+                    .disabled(isSavingImage)
                 }
             }
             .frame(width: 300)
@@ -355,16 +373,150 @@ struct ProfileEditPopup: View {
             return
         }
         
-        name = editedName
-        age = editedAge
-        weight = validWeight
-        gender = editedGender
-        profileImage = editedImage
-        
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         
-        isPresented = false
+        // Upload image if changed
+        if let newImage = editedImage, newImage != profileImage {
+            uploadProfileImage(newImage)
+        } else {
+            // Text fields only changed - update via API
+            updateTextFieldsOnly()
+        }
+    }
+    
+    private func updateTextFieldsOnly() {
+        isSavingImage = true
+        
+        Task {
+            do {
+                guard let validGender = editedGender else {
+                    throw APIError.serverError(statusCode: 400, message: "성별를 선택해주세요.")
+                }
+                
+                // Get current imageUrl from the app state
+                guard let groupId = UserDefaults.standard.string(forKey: "groupId") else {
+                    throw APIError.serverError(statusCode: 404, message: "가입한 그룹이 없습니다.")
+                }
+                
+                print("📝 Updating text fields only")
+                print("   name: \(editedName)")
+                print("   age: \(editedAge)")
+                print("   weight: \(editedWeight)")
+                print("   gender: \(validGender.rawValue)")
+                
+                // Use direct URLRequest
+                guard let url = URL(string: APIConfig.baseURL + "/api/groups/\(groupId)/pet") else {
+                    throw APIError.invalidURL
+                }
+                
+                struct UpdateTextRequest: Codable {
+                    let name: String
+                    let age: String
+                    let weight: String
+                    let gender: String
+                }
+                
+                let request = UpdateTextRequest(
+                    name: editedName,
+                    age: editedAge,
+                    weight: editedWeight.contains("kg") ? editedWeight : "\(editedWeight)kg",
+                    gender: validGender.rawValue
+                )
+                
+                var urlRequest = URLRequest(url: url)
+                urlRequest.httpMethod = "PATCH"
+                urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                
+                if let token = UserDefaults.standard.string(forKey: "accessToken") {
+                    urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+                
+                let encoder = JSONEncoder()
+                urlRequest.httpBody = try encoder.encode(request)
+                
+                let (data, response) = try await URLSession.shared.data(for: urlRequest)
+                
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode < 400 else {
+                    let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+                    throw APIError.serverError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 500, message: msg)
+                }
+                
+                print("✅ Text fields updated successfully")
+                
+                await MainActor.run {
+                    isSavingImage = false
+                    closeAndGoHome()
+                }
+            } catch {
+                print("❌ Failed to update: \(error)")
+                await MainActor.run {
+                    isSavingImage = false
+                }
+            }
+        }
+    }
+    
+    private func closeAndGoHome() {
+        // Add sufficient delay to ensure PATCH completes and bindings settle
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isPresented = false
+            selectedTab = 1 // 홈 탭으로 이동
+        }
+    }
+    
+    private func uploadProfileImage(_ image: UIImage) {
+        isSavingImage = true
+        
+        guard let imageData = image.pngData() else {
+            isSavingImage = false
+            return
+        }
+        
+        Task {
+            do {
+                print("📸 Uploading profile image to S3...")
+                let s3FilePath = try await S3UploadService.shared.uploadImage(imageData)
+                print("📸 Profile image uploaded: \(s3FilePath)")
+                
+                // Now update the pet profile with the new image URL
+                print("📸 Updating pet profile with image URL...")
+                guard let validGender = editedGender else {
+                    throw APIError.serverError(statusCode: 400, message: "성별를 선택해주세요.")
+                }
+                
+                // Convert edited weight string to Double
+                let cleanedWeight = editedWeight.replacingOccurrences(of: "kg", with: "").trimmingCharacters(in: .whitespaces)
+                guard let editedWeightDouble = Double(cleanedWeight) else {
+                    throw APIError.serverError(statusCode: 400, message: "유효한 몸무게를 입력해주세요.")
+                }
+                
+                try await PetLogAPIService.shared.updateProfile(
+                    name: editedName,
+                    age: editedAge,
+                    weight: editedWeightDouble,
+                    gender: validGender,
+                    imageUrl: s3FilePath
+                )
+                print("✅ Pet profile updated with image")
+                
+                // Wait a bit for backend to process
+                try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                
+                // Just close the popup
+                await MainActor.run {
+                    profileImage = image
+                    isSavingImage = false
+                    closeAndGoHome()
+                }
+            } catch {
+                print("❌ Failed to upload profile image: \(error)")
+                await MainActor.run {
+                    isSavingImage = false
+                    // Keep popup open to show error
+                }
+            }
+        }
     }
 }
 
@@ -479,7 +631,6 @@ struct ImagePicker: UIViewControllerRepresentable {
 struct ActivityCheckModal: View {
     @Binding var isPresented: Bool
     let activityType: ActivityType
-    @State private var checkerName: String = ""
     @State private var memo: String = ""
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
@@ -493,21 +644,16 @@ struct ActivityCheckModal: View {
         var title: String {
             switch self {
             case .feeding:
-                return "다음 급여 시 참고사항이 있다면 적어주세요"
+                return "밥을 주었습니다"
             case .watering:
-                return "다음 물 교체 시"
+                return "물을 교체했습니다"
             case .poop:
-                return "다음 배변 체크 시"
+                return "배변을 확인했습니다"
             }
         }
         
         var subtitle: String? {
-            switch self {
-            case .feeding:
-                return nil
-            case .watering, .poop:
-                return "참고사항이 있다면 적어주세요"
-            }
+            return "참고사항이 있다면 적어주세요"
         }
     }
     
@@ -524,49 +670,33 @@ struct ActivityCheckModal: View {
             // Modal content
             VStack(spacing: 20) {
                 // Title
-                VStack(spacing: activityType == .feeding ? 0 : 2) {
+                VStack(spacing: 2) {
                     Text(activityType.title)
                         .font(Theme.Typography.boldM)
                         .foregroundColor(Theme.Colors.text)
                     
                     if let subtitle = activityType.subtitle {
                         Text(subtitle)
-                            .font(Theme.Typography.boldM)
-                            .foregroundColor(Theme.Colors.text)
+                            .font(Theme.Typography.bodyM)
+                            .foregroundColor(Theme.Colors.secondaryText)
                     }
                 }
                 .multilineTextAlignment(.center)
                 
-                // Checker name field
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("급여자")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Theme.Colors.text)
-                    
-                    TextField("이름을 입력하세요", text: $checkerName)
-                        .font(.system(size: 14))
-                        .padding(8)
-                        .background(Color(red: 0.96, green: 0.97, blue: 0.97))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 0)
-                                .stroke(Color(red: 0.87, green: 0.87, blue: 0.87), lineWidth: 1)
-                        )
-                }
-                
-                // Memo text field
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("참고사항")
+                // Memo text field only
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("참고사항 (선택)")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Theme.Colors.text)
                     
                     TextEditor(text: $memo)
                         .font(.system(size: 12))
                         .foregroundColor(Theme.Colors.text)
-                        .frame(height: 100)
+                        .frame(height: 120)
                         .padding(8)
                         .background(Color(red: 0.96, green: 0.97, blue: 0.97))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 0)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color(red: 0.87, green: 0.87, blue: 0.87), lineWidth: 1)
                         )
                 }
@@ -620,11 +750,6 @@ struct ActivityCheckModal: View {
     }
     
     private func handleConfirm() {
-        guard !checkerName.isEmpty else {
-            errorMessage = "급여자 이름을 입력해주세요."
-            return
-        }
-        
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         
@@ -633,28 +758,39 @@ struct ActivityCheckModal: View {
         
         Task {
             do {
+                // Get groupId from UserDefaults
+                guard let groupId = UserDefaults.standard.string(forKey: "groupId") else {
+                    throw APIError.serverError(statusCode: 404, message: "가입한 그룹이 없습니다.")
+                }
+                
+                // Get current user info (or use default)
+                let userName = UserDefaults.standard.string(forKey: "userName") ?? "사용자"
+                
                 // Call appropriate API based on activity type
                 switch activityType {
                 case .feeding:
                     _ = try await PetLogAPIService.shared.createFeedingLog(
-                        checkerName: checkerName,
+                        groupId: groupId,
+                        checkerName: userName,
                         memo: memo.isEmpty ? nil : memo
                     )
                 case .watering:
                     _ = try await PetLogAPIService.shared.createWateringLog(
-                        checkerName: checkerName,
+                        groupId: groupId,
+                        checkerName: userName,
                         memo: memo.isEmpty ? nil : memo
                     )
                 case .poop:
                     _ = try await PetLogAPIService.shared.createPoopLog(
-                        checkerName: checkerName,
+                        groupId: groupId,
+                        checkerName: userName,
                         memo: memo.isEmpty ? nil : memo
                     )
                 }
                 
                 await MainActor.run {
                     isLoading = false
-                    onConfirm(checkerName, memo)
+                    onConfirm(userName, memo)
                     isPresented = false
                 }
             } catch {
@@ -682,15 +818,15 @@ struct ActivityCheckModal: View {
         inviteCode: nil,
         petData: CreateGroupRequest(
             imageUrl: "https://example.com/image.jpg",
-            name: "ㄱㄱ이",
-            age: "3살",
-            weight: "5.2kg",
-            gender: "MALE",
-            feedingCycle: 12,
-            lastFeedingTime: "2024-01-01T09:00",
-            wateringCycle: 24,
-            lastWateringTime: "2024-01-01T09:00",
-            notice: nil
+            name: "게게이",
+            age: "1연",
+            weight: "2kg",
+            gender: "FEMALE",
+            feedingCycle: 6,
+            lastFeedingTime: "2025-12-02T14:00",
+            wateringCycle: 6,
+            lastWateringTime: "2025-12-02T14:00",
+            note: "Test Group"
         )
     )
 }
@@ -702,7 +838,8 @@ struct ActivityCheckModal: View {
         age: .constant("3살"),
         weight: .constant(5.2),
         gender: .constant(.male),
-        profileImage: .constant(nil)
+        profileImage: .constant(nil),
+        selectedTab: .constant(1)
     )
 }
 

@@ -10,6 +10,7 @@ struct FigmaProfileHeader: View {
     @Binding var showEditPopup: Bool
     
     var body: some View {
+        let _ = print("📸 [FigmaProfileHeader] Loading image: \(imageURL?.absoluteString ?? "nil")")
         ZStack(alignment: .top) {
             // Yellow curved background
             GeometryReader { geometry in
@@ -40,20 +41,29 @@ struct FigmaProfileHeader: View {
                 AsyncImage(url: imageURL) { phase in
                     switch phase {
                     case .empty:
-                        ProgressView()
-                            .frame(width: 120, height: 120)
+                        let _ = print("📸 [FigmaProfileHeader] Image loading...")
+                        return AnyView(
+                            ProgressView()
+                                .frame(width: 120, height: 120)
+                        )
                     case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 120, height: 120)
-                            .clipShape(Circle())
-                    case .failure:
-                        Circle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 120, height: 120)
+                        let _ = print("✅ [FigmaProfileHeader] Image loaded successfully")
+                        return AnyView(
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 120, height: 120)
+                                .clipShape(Circle())
+                        )
+                    case .failure(let error):
+                        let _ = print("❌ [FigmaProfileHeader] Image load failed: \(error.localizedDescription)")
+                        return AnyView(
+                            Circle()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 120, height: 120)
+                        )
                     @unknown default:
-                        EmptyView()
+                        return AnyView(EmptyView())
                     }
                 }
                 .overlay(

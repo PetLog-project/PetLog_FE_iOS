@@ -12,7 +12,7 @@ let showAPITestView = false
 
 struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    @StateObject private var homeViewModel = HomeViewModel()
+    @StateObject private var homeViewModel = PetDashboardViewModel()
     @State private var selectedTab = 1
     @State private var showSharePopup = false
     @State private var showTestGroupPopup = false
@@ -80,43 +80,6 @@ struct ContentView: View {
                 FigmaBottomNavigation(selectedTab: $selectedTab, showNotesView: $showNotesView)
             }
             
-            // Test buttons (개발용)
-            #if DEBUG
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        Button(action: {
-                            showTestGroupPopup = true
-                        }) {
-                            Text("그룹 생성 테스트")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color.blue)
-                                .cornerRadius(20)
-                        }
-                        
-                        Button(action: {
-                            authViewModel.logout()
-                        }) {
-                            Text("로그아웃")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color.red)
-                                .cornerRadius(20)
-                        }
-                    }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 80)
-                }
-            }
-            #endif
-            
             // Popup overlays at top level
             if showSharePopup {
                 ShareInvitePopup(
@@ -130,18 +93,7 @@ struct ContentView: View {
                     ShareInvitePopup(
                         isPresented: $showTestGroupPopup,
                         inviteCode: nil,
-                        petData: CreateGroupRequest(
-                            imageUrl: "https://picsum.photos/200",
-                            name: "테스트 펫",
-                            age: "3살",
-                            weight: "5.5kg",
-                            gender: "MALE",
-                            feedingCycle: 12,
-                            lastFeedingTime: PetLogAPIService.formatDate(Date()),
-                            wateringCycle: 24,
-                            lastWateringTime: PetLogAPIService.formatDate(Date()),
-                            notice: "테스트 그룹입니다"
-                        )
+                        petData: nil
                     )
                 }
             
@@ -152,7 +104,8 @@ struct ContentView: View {
                     age: $profileAge,
                     weight: $profileWeight,
                     gender: $profileGender,
-                    profileImage: $profileImage
+                    profileImage: $profileImage,
+                    selectedTab: $selectedTab
                 )
             }
             
@@ -161,8 +114,10 @@ struct ContentView: View {
                     isPresented: $showFeedingModal,
                     activityType: .feeding,
                     onConfirm: { checkerName, memo in
-                        // Refresh data from API
+                        // Refresh data from API with slight delay to ensure backend is updated
+                        print("🟡 Feeding confirmed - refreshing data...")
                         Task {
+                            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
                             await homeViewModel.fetchData()
                         }
                     }
@@ -174,8 +129,10 @@ struct ContentView: View {
                     isPresented: $showWateringModal,
                     activityType: .watering,
                     onConfirm: { checkerName, memo in
-                        // Refresh data from API
+                        // Refresh data from API with slight delay to ensure backend is updated
+                        print("🟡 Watering confirmed - refreshing data...")
                         Task {
+                            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
                             await homeViewModel.fetchData()
                         }
                     }
@@ -187,8 +144,10 @@ struct ContentView: View {
                     isPresented: $showPoopModal,
                     activityType: .poop,
                     onConfirm: { checkerName, memo in
-                        // Refresh data from API
+                        // Refresh data from API with slight delay to ensure backend is updated
+                        print("🟡 Poop confirmed - refreshing data...")
                         Task {
+                            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
                             await homeViewModel.fetchData()
                         }
                     }
@@ -197,7 +156,10 @@ struct ContentView: View {
             
             if showJoinGroupView {
                 JoinGroupView(isPresented: $showJoinGroupView) {
-                    // Refresh data after joining new group
+                    // Clear cache and refresh data after joining new group
+                    print("🔄 Group joined/changed, clearing all caches")
+                    homeViewModel.clearCache()
+                    
                     Task {
                         await homeViewModel.fetchData()
                         // Reset profile data to trigger re-initialization
@@ -233,7 +195,8 @@ struct ContentView: View {
             }
         }
         .onChange(of: showEditPopup) { oldValue, newValue in
-            // When popup closes, update ViewModel with new profile data
+            // When popup closes, just update ViewModel - don't call updatePetInfo
+            // The S3 image upload flow handles PATCH separately via updateProfile()
             if oldValue == true && newValue == false, var data = homeViewModel.data {
                 data.profile.name = profileName
                 data.profile.age = profileAge
@@ -242,28 +205,10 @@ struct ContentView: View {
                     data.profile.gender = gender
                 }
                 homeViewModel.data = data
-                // Save to backend and refresh data
+                // Don't call updatePetInfo here - it causes duplicate PATCH
+                // Just fetch fresh data from server
                 Task {
-                    do {
-                        let request = UpdateProfileRequest(
-                            imageUrl: nil, // Image upload not supported; keep existing
-                            name: profileName,
-                            age: profileAge,
-                            weight: String(format: "%gkg", profileWeight),
-                            gender: profileGender?.rawValue,
-                            feedingCycle: nil,
-                            lastFeedingTime: nil,
-                            wateringCycle: nil,
-                            lastWateringTime: nil,
-                            notice: nil
-                        )
-                        _ = try await PetLogAPIService.shared.updateProfile(request: request)
-                        // Pull latest from server to ensure consistency
-                        await homeViewModel.fetchData()
-                    } catch {
-                        // Silently fail for now; UI already updated optimistically
-                        print("Failed to update profile: \(error)")
-                    }
+                    await homeViewModel.fetchData()
                 }
             }
         }

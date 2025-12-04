@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct DiaryView: View {
+    @State private var contentOpacity: Double = 0
+    
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
             Image(systemName: "book.fill")
@@ -23,6 +25,15 @@ struct DiaryView: View {
                 .foregroundColor(Theme.Colors.secondaryText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .opacity(contentOpacity)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.4)) {
+                contentOpacity = 1.0
+            }
+        }
+        .onDisappear {
+            contentOpacity = 0
+        }
     }
 }
 

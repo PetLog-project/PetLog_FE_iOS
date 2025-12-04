@@ -6,6 +6,11 @@ struct Theme {
         // Main Yellow from Figma
         static let mainYellow = Color(red: 1.0, green: 0.843, blue: 0.216) // #FFD737
         static let primary = mainYellow
+
+        // Brand Colors
+        // Kakao brand yellow and text black
+        static let kakaoYellow = Color(red: 0.996, green: 0.898, blue: 0.0) // #FEE500
+        static let kakaoBlack = Color(red: 0.098, green: 0.098, blue: 0.098) // #191919
         
         // Figma Text Colors
         static let black = Color(red: 0.118, green: 0.118, blue: 0.118) // #1E1E1E
@@ -37,8 +42,17 @@ struct Theme {
     
     // MARK: - Figma Typography (Pretendard)
     struct Typography {
+        // Heading XXL - 40px Pretendard SemiBold
+        static let headingXXL: Font = .system(size: 40, weight: .semibold, design: .default)
+        
         // Heading Large - 24px Pretendard SemiBold
         static let headingL: Font = .system(size: 24, weight: .semibold, design: .default)
+        
+        // Heading Medium - 18px Pretendard SemiBold
+        static let headingM: Font = .system(size: 18, weight: .semibold, design: .default)
+        
+        // Bold Large - 16px Pretendard Bold
+        static let boldL: Font = .system(size: 16, weight: .bold, design: .default)
         
         // Bold Medium - 14px Pretendard Bold
         static let boldM: Font = .system(size: 14, weight: .bold, design: .default)
