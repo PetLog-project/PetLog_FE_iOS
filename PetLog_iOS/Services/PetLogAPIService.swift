@@ -250,12 +250,8 @@ class PetLogAPIService {
                         
                         return Date()
                     }
-                    func parseWeight(_ s: String) -> Double {
-                        let norm = s.lowercased().replacingOccurrences(of: "kg", with: "").trimmingCharacters(in: .whitespaces)
-                        return Double(norm) ?? 0
-                    }
                     let prof = retryDecoded.data.profile
-                    let homeProfile = Profile(imageUrl: prof.imageUrl ?? "", name: prof.name, age: prof.age, weight: parseWeight(prof.weight), gender: Gender(rawValue: prof.gender) ?? .female)
+                    let homeProfile = Profile(imageUrl: prof.imageUrl ?? "", name: prof.name, age: prof.age, weight: prof.weight, gender: Gender(rawValue: prof.gender) ?? .female)
                     let feed = retryDecoded.data.feedingInfo
                     let homeFeeding = Feeding(feedingCycle: feed.feedingCycle, lastFeedingTime: parseTime(feed.lastFeedingTime), lastCheckerName: feed.lastCheckerName, lastMemo: feed.lastMemo ?? "")
                     let water = retryDecoded.data.wateringInfo
@@ -308,12 +304,8 @@ class PetLogAPIService {
             
             return Date()
         }
-        func parseWeight(_ s: String) -> Double {
-            let norm = s.lowercased().replacingOccurrences(of: "kg", with: "").trimmingCharacters(in: .whitespaces)
-            return Double(norm) ?? 0
-        }
         let prof = decoded.data.profile
-        let homeProfile = Profile(imageUrl: prof.imageUrl ?? "", name: prof.name, age: prof.age, weight: parseWeight(prof.weight), gender: Gender(rawValue: prof.gender) ?? .female)
+        let homeProfile = Profile(imageUrl: prof.imageUrl ?? "", name: prof.name, age: prof.age, weight: prof.weight, gender: Gender(rawValue: prof.gender) ?? .female)
         let feed = decoded.data.feedingInfo
         let homeFeeding = Feeding(feedingCycle: feed.feedingCycle, lastFeedingTime: parseTime(feed.lastFeedingTime), lastCheckerName: feed.lastCheckerName, lastMemo: feed.lastMemo ?? "")
         let water = decoded.data.wateringInfo
@@ -397,7 +389,7 @@ class PetLogAPIService {
     }
     
     /// Update pet profile with image URL (명세서: PATCH /api/groups/{groupId}/pet)
-    func updateProfile(name: String, age: String, weight: Double, gender: Gender, imageUrl: String) async throws {
+    func updateProfile(name: String, age: String, weight: String, gender: Gender, imageUrl: String) async throws {
         guard let groupId = UserDefaults.standard.string(forKey: "groupId") else {
             throw APIError.serverError(statusCode: 404, message: "가입한 그룹이 없습니다.")
         }
@@ -414,7 +406,7 @@ class PetLogAPIService {
             imageUrl: imageUrl,
             name: name,
             age: age,
-            weight: String(format: "%.1fkg", weight),
+            weight: weight.contains("kg") || weight.contains("g") ? weight : "\(weight)kg",
             gender: gender.rawValue
         )
         

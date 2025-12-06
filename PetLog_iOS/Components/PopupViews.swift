@@ -176,10 +176,11 @@ struct ProfileEditPopup: View {
     @Binding var isPresented: Bool
     @Binding var name: String
     @Binding var age: String
-    @Binding var weight: Double
+    @Binding var weight: String
     @Binding var gender: Gender?
     @Binding var profileImage: UIImage?
     @Binding var selectedTab: Int  // Add selectedTab binding
+    let imageURL: URL?  // Add imageURL parameter
     
     @State private var editedName: String
     @State private var editedAge: String
@@ -196,10 +197,11 @@ struct ProfileEditPopup: View {
         isPresented: Binding<Bool>,
         name: Binding<String>,
         age: Binding<String>,
-        weight: Binding<Double>,
+        weight: Binding<String>,
         gender: Binding<Gender?>,
         profileImage: Binding<UIImage?>,
-        selectedTab: Binding<Int>
+        selectedTab: Binding<Int>,
+        imageURL: URL? = nil
     ) {
         self._isPresented = isPresented
         self._name = name
@@ -208,11 +210,12 @@ struct ProfileEditPopup: View {
         self._gender = gender
         self._profileImage = profileImage
         self._selectedTab = selectedTab
+        self.imageURL = imageURL
         
         // Initialize state with current values
         self._editedName = State(initialValue: name.wrappedValue)
         self._editedAge = State(initialValue: age.wrappedValue)
-        self._editedWeight = State(initialValue: String(format: "%.1f", weight.wrappedValue))
+        self._editedWeight = State(initialValue: weight.wrappedValue)
         self._editedGender = State(initialValue: gender.wrappedValue)
         self._editedImage = State(initialValue: profileImage.wrappedValue)
     }
@@ -244,6 +247,31 @@ struct ProfileEditPopup: View {
                                     Circle()
                                         .stroke(Theme.Colors.white, lineWidth: 4)
                                 )
+                        } else if let url = imageURL {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .empty:
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 150, height: 150)
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 150, height: 150)
+                                        .clipShape(Circle())
+                                case .failure:
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 150, height: 150)
+                                @unknown default:
+                                    EmptyView()
+                                }
+                            }
+                            .overlay(
+                                Circle()
+                                    .stroke(Theme.Colors.white, lineWidth: 4)
+                            )
                         } else {
                             Circle()
                                 .fill(Color.gray.opacity(0.3))
@@ -261,7 +289,7 @@ struct ProfileEditPopup: View {
                 }
                 
                 // Form fields - Figma design
-                VStack(spacing: 8) {
+                VStack(alignment: .center, spacing: 8) {
                     // Name field
                     FigmaInputField(
                         label: "이름",
@@ -284,10 +312,15 @@ struct ProfileEditPopup: View {
                     )
                     
                     // Gender selector
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("성별")
-                            .font(.system(size: 8))
-                            .foregroundColor(Theme.Colors.text)
+                    VStack(alignment: .center, spacing: 12) {
+                        HStack {
+                            Text("성별")
+                                .font(.system(size: 8))
+                                .foregroundColor(Theme.Colors.text)
+                            Spacer()
+                        }
+                        .frame(width: 260)
+                        .padding(.horizontal, 12)
                         
                         HStack(spacing: 44) {
                             FigmaGenderButton(
@@ -305,12 +338,13 @@ struct ProfileEditPopup: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                 }
+                .frame(width: 260)
+                .frame(maxWidth: .infinity)
                 
                 // Buttons
-                HStack(spacing: 20) {
+                HStack(spacing: 60) {
                     Button {
                         isPresented = false
                     } label: {
@@ -337,7 +371,6 @@ struct ProfileEditPopup: View {
                                 .font(Theme.Typography.boldM)
                                 .foregroundColor(Theme.Colors.text)
                         }
-                        Spacer()
                     }
                     .frame(width: 100, height: 40)
                     .background(Theme.Colors.mainYellow)
@@ -365,11 +398,10 @@ struct ProfileEditPopup: View {
         showNameError = editedName.isEmpty
         showAgeError = editedAge.isEmpty
         
-        // Validate weight as number
-        let weightValue = Double(editedWeight.replacingOccurrences(of: "kg", with: "").trimmingCharacters(in: .whitespaces))
-        showWeightError = weightValue == nil
+        // Validate weight - just check if not empty (can be any format like "1.0kg", "100g", etc.)
+        showWeightError = editedWeight.trimmingCharacters(in: .whitespaces).isEmpty
         
-        guard !editedName.isEmpty && !editedAge.isEmpty, let validWeight = weightValue else {
+        guard !editedName.isEmpty && !editedAge.isEmpty && !editedWeight.trimmingCharacters(in: .whitespaces).isEmpty else {
             return
         }
         
@@ -417,10 +449,11 @@ struct ProfileEditPopup: View {
                     let gender: String
                 }
                 
+                // Send weight as-is without modifying (API handles the format)
                 let request = UpdateTextRequest(
                     name: editedName,
                     age: editedAge,
-                    weight: editedWeight.contains("kg") ? editedWeight : "\(editedWeight)kg",
+                    weight: editedWeight,
                     gender: validGender.rawValue
                 )
                 
@@ -485,16 +518,10 @@ struct ProfileEditPopup: View {
                     throw APIError.serverError(statusCode: 400, message: "성별를 선택해주세요.")
                 }
                 
-                // Convert edited weight string to Double
-                let cleanedWeight = editedWeight.replacingOccurrences(of: "kg", with: "").trimmingCharacters(in: .whitespaces)
-                guard let editedWeightDouble = Double(cleanedWeight) else {
-                    throw APIError.serverError(statusCode: 400, message: "유효한 몸무게를 입력해주세요.")
-                }
-                
                 try await PetLogAPIService.shared.updateProfile(
                     name: editedName,
                     age: editedAge,
-                    weight: editedWeightDouble,
+                    weight: editedWeight,
                     gender: validGender,
                     imageUrl: s3FilePath
                 )
@@ -536,6 +563,7 @@ struct FigmaInputField: View {
                 TextField("", text: $text)
                     .font(.system(size: 12))
                     .foregroundColor(Theme.Colors.text)
+                    .multilineTextAlignment(.leading)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -574,10 +602,11 @@ struct FigmaGenderButton: View {
     var body: some View {
         Button(action: action) {
             Image(gender == .male ? "ic_baseline_male" : "ic_baseline_female")
+                .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 25, height: 25)
-                .foregroundColor(isSelected ? Color.white : Theme.Colors.text)
+                .foregroundColor(Color.white)
                 .frame(width: 49, height: 49)
                 .background(isSelected ? (gender == .female ? Color(red: 0.99, green: 0.56, blue: 0.69) : Theme.Colors.blue) : Color(red: 0.87, green: 0.87, blue: 0.87))
                 .clipShape(Circle())
@@ -692,13 +721,11 @@ struct ActivityCheckModal: View {
                     TextEditor(text: $memo)
                         .font(.system(size: 12))
                         .foregroundColor(Theme.Colors.text)
+                        .scrollContentBackground(.hidden)
                         .frame(height: 120)
                         .padding(8)
                         .background(Color(red: 0.96, green: 0.97, blue: 0.97))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color(red: 0.87, green: 0.87, blue: 0.87), lineWidth: 1)
-                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 
                 // Error message
@@ -836,10 +863,11 @@ struct ActivityCheckModal: View {
         isPresented: .constant(true),
         name: .constant("ㄱㄱ이"),
         age: .constant("3살"),
-        weight: .constant(5.2),
+        weight: .constant("5.2kg"),
         gender: .constant(.male),
         profileImage: .constant(nil),
-        selectedTab: .constant(1)
+        selectedTab: .constant(1),
+        imageURL: nil
     )
 }
 

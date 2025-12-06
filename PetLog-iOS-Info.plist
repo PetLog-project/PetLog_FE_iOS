@@ -31,6 +31,10 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>BlackHanSans-Regular.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array/>
 </dict>

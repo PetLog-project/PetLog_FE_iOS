@@ -38,7 +38,7 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         return last.addingTimeInterval(TimeInterval(steps) * interval)
     }
     
-    enum ReminderType: String { case feeding = "FEEDING_REMINDER"; case watering = "WATERING_REMINDER" }
+    enum ReminderType: String { case feeding = "FEEDING_REMINDER"; case watering = "WATERING_REMINDER"; case schedule = "SCHEDULE_REMINDER" }
     
     /// Schedule a specific reminder using the user's preferred naming `remindNotificationAt`.
     /// - Parameters:
@@ -57,6 +57,9 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         case .watering:
             title = "물을 교체할 시간이에요!"
             body = "\(checkerName ?? "")님, 물을 교체하세요.".trimmingCharacters(in: .whitespaces)
+        case .schedule:
+            title = "일정 알림"
+            body = "일정이 곧 시작됩니다."
         }
         scheduleReminder(title: title, body: body, triggerDate: triggerDate, identifier: type.rawValue, action: type.rawValue)
     }
@@ -75,6 +78,38 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         print("🔔 Scheduled reminders:")
         print("   Feeding -> next at: \(nextOccurrence(from: feeding.lastFeedingTime, cycleHours: feeding.feedingCycle))")
         print("   Watering -> next at: \(nextOccurrence(from: watering.lastWateringTime, cycleHours: watering.wateringCycle))")
+    }
+    
+    /// Schedule a local notification for a calendar event
+    /// - Parameters:
+    ///   - scheduleId: Unique identifier for the schedule
+    ///   - title: Title of the schedule
+    ///   - remindNotificationAt: Date when the notification should fire
+    func scheduleCalendarReminder(scheduleId: String, title: String, remindNotificationAt: Date) {
+        // Cancel existing notification for this schedule
+        cancelCalendarReminder(scheduleId: scheduleId)
+        
+        let identifier = "schedule_\(scheduleId)"
+        let notificationTitle = "일정 알림"
+        let notificationBody = "\(title) 일정이 곧 시작됩니다."
+        
+        scheduleReminder(
+            title: notificationTitle,
+            body: notificationBody,
+            triggerDate: remindNotificationAt,
+            identifier: identifier,
+            action: ReminderType.schedule.rawValue
+        )
+        
+        print("🔔 Calendar reminder scheduled: \(title) at \(remindNotificationAt)")
+    }
+    
+    /// Cancel a local notification for a calendar event
+    /// - Parameter scheduleId: Unique identifier for the schedule
+    func cancelCalendarReminder(scheduleId: String) {
+        let identifier = "schedule_\(scheduleId)"
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+        print("🔕 Calendar reminder cancelled: \(scheduleId)")
     }
     
     /// Schedule a single local notification
@@ -206,6 +241,9 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         case "POOP_REMINDER":
             print("🚽 Poop reminder notification tapped")
             // Navigate to poop view
+        case "SCHEDULE_REMINDER":
+            print("📅 Schedule reminder notification tapped")
+            // Navigate to calendar view
         default:
             print("📌 Unknown action: \(action)")
         }

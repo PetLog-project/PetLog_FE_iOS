@@ -122,7 +122,7 @@ struct SwipeableActivityCards: View {
                             onPoopButtonTap: { showPoopModal = true }
                         )
                         .frame(width: 251, height: 328)
-                        .offset(x: CGFloat(index - currentIndex) * (251 + 20) + dragOffset)
+                        .offset(x: CGFloat(index - currentIndex) * (251 + 30) + dragOffset)
                         .opacity(index == currentIndex ? 1.0 : 0.6)
                         .scaleEffect(index == currentIndex ? 1.0 : 0.9)
                         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentIndex)

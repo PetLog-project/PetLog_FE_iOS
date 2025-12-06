@@ -5,7 +5,7 @@ struct FigmaProfileHeader: View {
     let imageURL: URL?
     @Binding var name: String
     @Binding var age: String
-    @Binding var weight: Double
+    @Binding var weight: String
     @Binding var gender: Gender?
     @Binding var showEditPopup: Bool
     
@@ -16,7 +16,7 @@ struct FigmaProfileHeader: View {
             GeometryReader { geometry in
                 Path { path in
                     let width = geometry.size.width
-                    let height: CGFloat = 220
+                    let height: CGFloat = 160
                     
                     path.move(to: CGPoint(x: 0, y: 0))
                     path.addLine(to: CGPoint(x: width, y: 0))
@@ -31,45 +31,47 @@ struct FigmaProfileHeader: View {
                 }
                 .fill(Theme.Colors.mainYellow)
             }
-            .frame(height: 220)
+            .frame(height: 160)
             
             // Content layer
             VStack(spacing: 0) {
-                Spacer().frame(height: 60)
+                Spacer().frame(height: 30)
                 
                 // Pet image
                 AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        let _ = print("📸 [FigmaProfileHeader] Image loading...")
-                        return AnyView(
-                            ProgressView()
-                                .frame(width: 120, height: 120)
-                        )
-                    case .success(let image):
-                        let _ = print("✅ [FigmaProfileHeader] Image loaded successfully")
-                        return AnyView(
+                    Group {
+                        switch phase {
+                        case .empty:
+                            let _ = print("📸 [FigmaProfileHeader] Image loading...")
+                            ZStack {
+                                Circle()
+                                    .fill(Color.gray.opacity(0.3))
+                                Text("로딩중")
+                                    .font(Theme.Typography.bodyM)
+                                    .foregroundColor(Theme.Colors.secondaryText)
+                            }
+                            .frame(width: 180, height: 180)
+                        case .success(let image):
+                            let _ = print("✅ [FigmaProfileHeader] Image loaded successfully")
                             image
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 120, height: 120)
+                                .frame(width: 180, height: 180)
                                 .clipShape(Circle())
-                        )
-                    case .failure(let error):
-                        let _ = print("❌ [FigmaProfileHeader] Image load failed: \(error.localizedDescription)")
-                        return AnyView(
+                        case .failure(let error):
+                            let _ = print("❌ [FigmaProfileHeader] Image load failed: \(error.localizedDescription)")
                             Circle()
                                 .fill(Color.gray.opacity(0.3))
-                                .frame(width: 120, height: 120)
-                        )
-                    @unknown default:
-                        return AnyView(EmptyView())
+                                .frame(width: 180, height: 180)
+                        @unknown default:
+                            EmptyView()
+                        }
                     }
                 }
                 .overlay(
                     Circle()
                         .stroke(Theme.Colors.white, lineWidth: 10)
-                        .frame(width: 140, height: 140)
+                        .frame(width: 190, height: 190)
                 )
                 
                 Spacer().frame(height: 12)
@@ -84,16 +86,18 @@ struct FigmaProfileHeader: View {
                             .foregroundColor(Theme.Colors.text)
                         
                         Image("icon_park_outline_write")
+                            .renderingMode(.template)
                             .resizable()
                             .frame(width: 20, height: 20)
-                            .foregroundColor(Theme.Colors.text)
+                            .foregroundColor(Color.gray.opacity(0.5))
                     }
                 }
+                .offset(x: 15)
                 
                 Spacer().frame(height: 16)
                 
                 // Pet stats
-                HStack(spacing: 0) {
+                HStack(spacing: 3) {
                     Spacer()
                     
                     // Age
@@ -113,7 +117,7 @@ struct FigmaProfileHeader: View {
                         Text("몸무게")
                             .font(Theme.Typography.boldM)
                             .foregroundColor(Theme.Colors.text)
-                        Text(String(format: "%.1fkg", weight))
+                        Text(weight)
                             .font(Theme.Typography.bodyM)
                             .foregroundColor(Theme.Colors.text)
                     }
@@ -135,7 +139,7 @@ struct FigmaProfileHeader: View {
                     
                     Spacer()
                 }
-                .frame(maxWidth: 181)
+                .frame(maxWidth: 210)
                 
                 Spacer().frame(height: 16)
             }
@@ -627,6 +631,7 @@ struct FigmaBottomNavigation: View {
     @Binding var selectedTab: Int
     @Binding var showNotesView: Bool
     @State private var isAnimating = false
+    var onTabReselected: ((Int) -> Void)? = nil
     
     var body: some View {
         HStack(spacing: 0) {
@@ -639,6 +644,9 @@ struct FigmaBottomNavigation: View {
                 guard !isAnimating else { return }
                 isAnimating = true
                 showNotesView = false
+                if selectedTab == 0 {
+                    onTabReselected?(0)
+                }
                 selectedTab = 0
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     isAnimating = false
@@ -654,6 +662,9 @@ struct FigmaBottomNavigation: View {
                 guard !isAnimating else { return }
                 isAnimating = true
                 showNotesView = false
+                if selectedTab == 1 {
+                    onTabReselected?(1)
+                }
                 selectedTab = 1
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     isAnimating = false
@@ -669,6 +680,9 @@ struct FigmaBottomNavigation: View {
                 guard !isAnimating else { return }
                 isAnimating = true
                 showNotesView = false
+                if selectedTab == 2 {
+                    onTabReselected?(2)
+                }
                 selectedTab = 2
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     isAnimating = false
@@ -718,6 +732,7 @@ struct FigmaAppHeader: View {
     @Binding var showNotesView: Bool
     @Binding var showJoinGroupView: Bool
     let isWhiteBackground: Bool
+    var onSettingsTap: (() -> Void)? = nil
     
     var body: some View {
         HStack {
@@ -747,8 +762,13 @@ struct FigmaAppHeader: View {
                 }
                 
                 Button {
-                    print("DEBUG: Join Group button tapped")
-                    showJoinGroupView = true
+                    // 설정 단추: onSettingsTap 콜신이 있습니다, 단추라면 showJoinGroupView 논리 유지
+                    if let onSettingsTap = onSettingsTap {
+                        onSettingsTap()
+                    } else {
+                        print("DEBUG: Settings icon tapped (default behavior)")
+                        showJoinGroupView = true
+                    }
                 } label: {
                     Image("uil_setting")
                         .resizable()

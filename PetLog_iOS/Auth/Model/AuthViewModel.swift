@@ -32,12 +32,18 @@ class AuthViewModel: ObservableObject {
     }
     
     func checkAuthStatus() {
-        // TODO: Implement actual auth check from secure storage
-        // Note: Do NOT clear UserDefaults in DEBUG mode anymore - keep auth tokens persistent
+        // Check if user has valid access token from previous login
+        print("🔐 [AuthViewModel] Checking auth status...")
         
-        if let userId = UserDefaults.standard.string(forKey: "userId") {
+        if let userId = UserDefaults.standard.string(forKey: "userId"),
+           let accessToken = UserDefaults.standard.string(forKey: "accessToken"),
+           !accessToken.isEmpty {
+            print("🔐 [AuthViewModel] ✅ Found valid token - auto-login")
             userIdentifier = userId
             isAuthenticated = true
+        } else {
+            print("🔐 [AuthViewModel] ❌ No valid token - showing login view")
+            isAuthenticated = false
         }
     }
     
@@ -157,12 +163,16 @@ class AuthViewModel: ObservableObject {
         // Store userId (use email as identifier for now)
         UserDefaults.standard.set("user_\(UUID().uuidString.prefix(8))", forKey: "userId")
         
+        // 🔑 중요: 이전 로그인의 groupId 초기화 (새로운 유저일 수 있음)
+        UserDefaults.standard.removeObject(forKey: "groupId")
+        print("🔑 [Login] Previous groupId cleared - ready for fresh group fetch")
+        
         print("DEBUG: isAuthenticated is now: \(isAuthenticated)")
         
         // Tokens are stored in AuthAPIService property
         print("✅ Login success - accessToken stored, isAuthenticated: \(isAuthenticated)")
         
-        // Fetch and store groupId using /api/groups/my
+        // Fetch and store groupId using /api/groups/my (optional - don't block login if it fails)
         Task {
             do {
                 let myGroups = try await PetLogAPIService.shared.getMyGroups()
@@ -170,14 +180,15 @@ class AuthViewModel: ObservableObject {
                     UserDefaults.standard.set(firstGroupId, forKey: "groupId")
                     print("✅ GroupId stored: \(firstGroupId)")
                 } else {
-                    print("ℹ️ User has no groups yet")
+                    print("ℹ️ User has no groups yet - will be created during onboarding")
                 }
-                
-                // Register push notifications
-                await registerPushNotifications()
             } catch {
-                print("⚠️ Failed to fetch groupId: \(error)")
+                print("⚠️ Failed to fetch groupId (non-critical): \(error)")
+                print("ℹ️ User will create/join group during onboarding")
             }
+            
+            // Register push notifications
+            await registerPushNotifications()
         }
     }
     

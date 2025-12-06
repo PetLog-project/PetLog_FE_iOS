@@ -16,30 +16,27 @@ struct LoginView: View {
             Theme.Colors.background
                 .ignoresSafeArea()
             
-            VStack(spacing: 40) {
-                Spacer()
-                
-                // Logo and Title Section
-                VStack(spacing: 20) {
-                    // Logo Placeholder - Replace with actual logo from Assets
-                    Image(systemName: "pawprint.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(Theme.Colors.mainYellow)
-                    
-                    Text("반려기록")
-                        .font(Theme.Typography.headingL)
-                        .foregroundColor(Theme.Colors.black)
-                    
-                    Text("소중한 반려동물의 일상을 기록해보세요")
-                        .font(Theme.Typography.bodyM)
-                        .foregroundColor(Theme.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
+            VStack(spacing: 0) {
+                // Title at top
+                Text("반려기록")
+                    .font(.custom("BlackHanSans-Regular", size: 60))
+                    .foregroundColor(Theme.Colors.black)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 50)
+                    .padding(.top, 70)
                 
                 Spacer()
                 
-                // Login Buttons Section
-                VStack(spacing: 12) {
+                // Illustration Section - Combined cat and llama image
+                Image("login_illustration")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 440)
+                    .padding(.horizontal, 0)
+                    .padding(.bottom, 0)
+                
+                // Login Buttons Section with black background
+                VStack(spacing: 16) {
                     // Kakao Login Button
                     Button(action: {
                         authViewModel.loginWithKakao()
@@ -59,60 +56,12 @@ struct LoginView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .disabled(authViewModel.isLoading)
-                    
-                    // Apple Login temporarily removed (requires paid Apple Developer account)
-                    
-                    // Test Login Button (for development/simulator)
-#if DEBUG
-                    Button(action: {
-                        authViewModel.loginWithTestAccount()
-                    }) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "person.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                            
-                            Text("테스트 계정으로 시작하기")
-                                .font(Theme.Typography.boldM)
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.gray)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .disabled(authViewModel.isLoading)
-                    #endif
                 }
-                .padding(.horizontal, 24)
-
-                // Terms and Privacy Section
-                HStack(spacing: 8) {
-                    Text("계속 진행하면")
-                        .font(Theme.Typography.bodyXS)
-                        .foregroundColor(Theme.Colors.secondaryText)
-                    
-                    Button("이용약관") {
-                        // TODO: Show terms
-                    }
-                    .font(Theme.Typography.boldXS)
-                    .foregroundColor(Theme.Colors.black)
-                    
-                    Text("및")
-                        .font(Theme.Typography.bodyXS)
-                        .foregroundColor(Theme.Colors.secondaryText)
-                    
-                    Button("개인정보처리방침") {
-                        // TODO: Show privacy policy
-                    }
-                    .font(Theme.Typography.boldXS)
-                    .foregroundColor(Theme.Colors.black)
-                    
-                    Text("에 동의하는 것으로 간주됩니다")
-                        .font(Theme.Typography.bodyXS)
-                        .foregroundColor(Theme.Colors.secondaryText)
-                }
-                .padding(.bottom, 24)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+                .background(Theme.Colors.black)
+                .ignoresSafeArea(edges: .bottom)
                 
                 // Loading Indicator
                 if authViewModel.isLoading {

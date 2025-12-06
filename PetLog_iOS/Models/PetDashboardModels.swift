@@ -9,13 +9,8 @@ struct Profile: Codable, Equatable {
     let imageUrl: String?
     var name: String
     var age: String
-    var weight: Double  
+    var weight: String  // Changed to String to display as-is from API
     var gender: Gender
-    
-    // Computed property for display
-    var weightString: String {
-        return "\(weight)kg"
-    }
 }
 
 struct Feeding: Codable, Equatable {
@@ -62,7 +57,7 @@ enum PetDashboardSamples {
                 "imageUrl" : "https://media.wired.com/photos/593261cab8eb31692072f129/3:2/w_2240,c_limit/85120553.jpg",
                 "name" : "여름",
                 "age" : "2개월",
-                "weight" : 1.0,
+                "weight" : "1.0kg",
                 "gender" : "FEMALE"
             },
             "feeding" : {

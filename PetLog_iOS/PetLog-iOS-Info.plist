@@ -31,7 +31,11 @@
 	<string>0db0066e2fba9d003e058dea7bf2c96a</string>
 	<key>UIBackgroundModes</key>
 	<array/>
+	<key>NSCameraUsageDescription</key>
+	<string>카메라를 사용합니다.</string>
 	<key>API_BASE_URL</key>
 	<string>https://dev.petlog.site</string>
+	<key>WEBVIEW_BASE_URL</key>
+	<string>https://www.petlog.site</string>
 </dict>
 </plist>

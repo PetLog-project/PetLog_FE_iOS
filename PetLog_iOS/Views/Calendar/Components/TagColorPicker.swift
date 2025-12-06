@@ -12,42 +12,28 @@ struct TagColorPicker: View {
     @Binding var showPicker: Bool
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.md) {
+        VStack(spacing: 12) {
             ForEach([ScheduleTag.YELLOW, ScheduleTag.GREEN, ScheduleTag.BLUE], id: \.self) { tag in
                 Button(action: {
                     selectedTag = tag
                     showPicker = false
                 }) {
-                    HStack(spacing: Theme.Spacing.md) {
-                        Circle()
-                            .fill(tagColor(for: tag))
-                            .frame(width: 24, height: 24)
-                            .overlay(
-                                Circle()
-                                    .stroke(selectedTag == tag ? Theme.Colors.black : Color.clear, lineWidth: 2)
-                            )
-                        
-                        Text(tagName(for: tag))
-                            .font(Theme.Typography.bodyM)
-                            .foregroundColor(Theme.Colors.text)
-                        
-                        Spacer()
-                        
-                        if selectedTag == tag {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(Theme.Colors.mainYellow)
-                        }
-                    }
-                    .padding(Theme.Spacing.md)
-                    .background(selectedTag == tag ? Theme.Colors.mainYellow.opacity(0.1) : Color.clear)
-                    .cornerRadius(8)
+                    Circle()
+                        .fill(tagColor(for: tag))
+                        .frame(width: 30, height: 30)
+                        .overlay(
+                            Circle()
+                                .stroke(tagColor(for: tag), lineWidth: selectedTag == tag ? 2.5 : 0)
+                                .frame(width: 36, height: 36)
+                        )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(Theme.Spacing.md)
-        .frame(width: 200)
+        .padding(16)
+        .background(Theme.Colors.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 2)
     }
     
     private func tagColor(for tag: ScheduleTag) -> Color {

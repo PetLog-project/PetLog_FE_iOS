@@ -27,7 +27,7 @@ class CalendarViewModel: ObservableObject {
         // Get current groupId from UserDefaults
         let groupId = UserDefaults.standard.string(forKey: "groupId")
         
-        // Check if we need to load:
+        // Check if need to load:
         // 1. Different month, OR
         // 2. Different groupId (user switched groups)
         let calendar = Calendar.current

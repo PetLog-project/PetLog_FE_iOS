@@ -122,6 +122,12 @@ class ScheduleAPIService {
         let encoder = JSONEncoder()
         urlRequest.httpBody = try encoder.encode(request)
         
+        // Debug: Print request body
+        if let requestBody = urlRequest.httpBody,
+           let jsonString = String(data: requestBody, encoding: .utf8) {
+            print("📤 [updateSchedule] Request body: \(jsonString)")
+        }
+        
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
         
         guard let httpResponse = response as? HTTPURLResponse else {

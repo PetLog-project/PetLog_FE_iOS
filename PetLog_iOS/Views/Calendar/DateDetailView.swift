@@ -83,7 +83,7 @@ struct DateDetailView: View {
                     Button(action: onAddSchedule) {
                         Image(systemName: "plus")
                             .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(Theme.Colors.black)
+                            .foregroundColor(Theme.Colors.white)
                             .frame(width: 40, height: 40)
                             .background(Theme.Colors.mainYellow)
                             .clipShape(Circle())
@@ -145,7 +145,7 @@ struct ModalScheduleCard: View {
                             
                             Image(systemName: schedule.isAllDay ? "calendar" : "clock")
                                 .font(.system(size: 16))
-                                .foregroundColor(Theme.Colors.black)
+                                .foregroundColor(Theme.Colors.white)
                         }
                         .padding(8)
                         .background(tagColor)

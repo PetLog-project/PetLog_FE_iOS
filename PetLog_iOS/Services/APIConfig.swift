@@ -2,6 +2,7 @@ import Foundation
 
 // MARK: - API Configuration
 enum APIConfig {
+    // API 서버 URL (백엔드)
     // Prefer Info.plist override via `API_BASE_URL`. Fallbacks for sim/device.
     static let baseURL: String = {
         if let url = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
@@ -12,6 +13,19 @@ enum APIConfig {
         // Default to dev deployment site
         return "https://dev.petlog.site"
     }()
+    
+    // WebView URL (프론트엔드)
+    // 프론트엔드는 프로덕션에만 배포되어 있음
+    static let webViewBaseURL: String = {
+        if let url = Bundle.main.object(forInfoDictionaryKey: "WEBVIEW_BASE_URL") as? String,
+           url.isEmpty == false,
+           url.contains("${") == false {
+            return url
+        }
+        // 프론트엔드는 현재 프로덕션에만 배포됨
+        return "https://www.petlog.site"
+    }()
+    
     static let timeoutInterval: TimeInterval = 30
 }
 

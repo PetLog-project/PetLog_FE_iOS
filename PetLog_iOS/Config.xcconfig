@@ -10,3 +10,4 @@
 
 KAKAO_NATIVE_APP_KEY = 0db0066e2fba9d003e058dea7bf2c96a
 API_BASE_URL = https://dev.petlog.site
+WEBVIEW_BASE_URL = https://www.petlog.site

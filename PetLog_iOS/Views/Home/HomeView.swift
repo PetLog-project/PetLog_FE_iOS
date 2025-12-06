@@ -17,7 +17,7 @@ struct HomeView: View {
     // Profile data for editing - now bindings from ContentView
     @Binding var profileName: String
     @Binding var profileAge: String
-    @Binding var profileWeight: Double
+    @Binding var profileWeight: String
     @Binding var profileGender: Gender?
     @Binding var profileImage: UIImage?
     
@@ -191,7 +191,7 @@ struct HomeView: View {
         @State private var showPoopModal = false
         @State private var profileName = ""
         @State private var profileAge = ""
-        @State private var profileWeight: Double = 0.0
+        @State private var profileWeight: String = ""
         @State private var profileGender: Gender? = nil
         @State private var profileImage: UIImage? = nil
         let viewModel: PetDashboardViewModel

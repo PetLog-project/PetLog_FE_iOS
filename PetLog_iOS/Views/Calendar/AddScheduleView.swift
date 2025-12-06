@@ -48,13 +48,12 @@ struct AddScheduleView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Theme.Colors.background
-                    .ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(spacing: 0) {
+        ZStack {
+            Theme.Colors.background
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 0) {
                         // Title Section with tag color dot
                         HStack(spacing: 12) {
                             TextField("제목", text: $title)
@@ -69,10 +68,6 @@ struct AddScheduleView: View {
                                 Circle()
                                     .fill(selectedTagColor)
                                     .frame(width: 24, height: 24)
-                            }
-                            .popover(isPresented: $showTagPicker, arrowEdge: .top) {
-                                TagColorPicker(selectedTag: $selectedTag, showPicker: $showTagPicker)
-                                    .presentationCompactAdaptation(.popover)
                             }
                         }
                         .padding(.horizontal, Theme.Spacing.lg)
@@ -93,9 +88,7 @@ struct AddScheduleView: View {
                             
                             Spacer()
                             
-                            Toggle("", isOn: $isAllDay)
-                                .labelsHidden()
-                                .tint(Theme.Colors.mainYellow)
+                            CustomToggle(isOn: $isAllDay)
                         }
                         .padding(.horizontal, Theme.Spacing.lg)
                         .padding(.vertical, Theme.Spacing.md)
@@ -103,63 +96,42 @@ struct AddScheduleView: View {
                         Divider()
                             .padding(.horizontal, Theme.Spacing.lg)
                         
-                        // Date selection with arrow
-                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                            HStack(spacing: 20) {
-                                DatePicker("", selection: $startDate, displayedComponents: [.date])
-                                    .labelsHidden()
-                                    .datePickerStyle(.compact)
-                                    .environment(\.locale, Locale(identifier: "ko_KR"))
+                        // Date and Time selection
+                        HStack(spacing: 0) {
+                            if isAllDay {
+                                // All-day: only dates side by side
+                                CustomDatePicker(date: $startDate)
+                                    .frame(maxWidth: .infinity)
                                 
                                 Image(systemName: "arrow.right")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(Theme.Colors.text)
+                                    .padding(.horizontal, 20)
                                 
-                                DatePicker("", selection: $endDate, displayedComponents: [.date])
-                                    .labelsHidden()
-                                    .datePickerStyle(.compact)
-                                    .environment(\.locale, Locale(identifier: "ko_KR"))
-                            }
-                            
-                            // Time picker - only show when isAllDay is false
-                            if !isAllDay {
-                                HStack(spacing: 20) {
-                                    // Start time picker
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("시작시간")
-                                            .font(.system(size: 12, weight: .regular))
-                                            .foregroundColor(Color(hex: "#707070"))
-                                        
-                                        DatePicker("", selection: $startDate, displayedComponents: [.hourAndMinute])
-                                            .labelsHidden()
-                                            .datePickerStyle(.compact)
-                                            .environment(\.locale, Locale(identifier: "ko_KR"))
-                                    }
-                                    
-                                    Image(systemName: "arrow.right")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(Theme.Colors.text)
-                                        .padding(.top, 20)
-                                    
-                                    // End time picker
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("종료시간")
-                                            .font(.system(size: 12, weight: .regular))
-                                            .foregroundColor(Color(hex: "#707070"))
-                                        
-                                        DatePicker("", selection: $endDate, displayedComponents: [.hourAndMinute])
-                                            .labelsHidden()
-                                            .datePickerStyle(.compact)
-                                            .environment(\.locale, Locale(identifier: "ko_KR"))
-                                    }
-                                    
-                                    Spacer()
+                                CustomDatePicker(date: $endDate)
+                                    .frame(maxWidth: .infinity)
+                            } else {
+                                // Timed: date and time stacked vertically on each side
+VStack(alignment: .center, spacing: 12) {
+                                    CustomDatePicker(date: $startDate)
+                                    CustomTimePicker(date: $startDate)
                                 }
-                                .transition(.opacity)
+                                .frame(maxWidth: .infinity)
+                                
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(Theme.Colors.text)
+                                    .padding(.horizontal, 20)
+                                
+VStack(alignment: .center, spacing: 12) {
+                                    CustomDatePicker(date: $endDate)
+                                    CustomTimePicker(date: $endDate)
+                                }
+                                .frame(maxWidth: .infinity)
                             }
                         }
                         .padding(.horizontal, Theme.Spacing.lg)
-                        .padding(.vertical, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.lg)
                         
                         Divider()
                             .padding(.horizontal, Theme.Spacing.lg)
@@ -167,8 +139,10 @@ struct AddScheduleView: View {
                         // Reminder Section
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             HStack {
-                                Image(systemName: "bell")
-                                    .font(.system(size: 20))
+                                Image("clock")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 20, height: 20)
                                     .foregroundColor(Theme.Colors.text)
                                 
                                 Text("리마인드 시간")
@@ -182,13 +156,17 @@ struct AddScheduleView: View {
                                         reminderOption = option
                                     }) {
                                         HStack {
-                                            Circle()
-                                                .strokeBorder(reminderOption == option ? Theme.Colors.mainYellow : Color(hex: "#D9D9D9"), lineWidth: 2)
-                                                .background(
+                                            ZStack {
+                                                Circle()
+                                                    .stroke(reminderOption == option ? Theme.Colors.mainYellow : Color(hex: "#A9A9A9"), lineWidth: 2)
+                                                    .frame(width: 20, height: 20)
+                                                
+                                                if reminderOption == option {
                                                     Circle()
-                                                        .fill(reminderOption == option ? Theme.Colors.mainYellow : Color.clear)
-                                                )
-                                                .frame(width: 20, height: 20)
+                                                        .fill(Theme.Colors.mainYellow)
+                                                        .frame(width: 12, height: 12)
+                                                }
+                                            }
                                             
                                             Text(option.rawValue)
                                                 .font(Theme.Typography.bodyM)
@@ -208,23 +186,25 @@ struct AddScheduleView: View {
                             .padding(.horizontal, Theme.Spacing.lg)
                         
                         // Memo Section
-                        ZStack(alignment: .topLeading) {
-                            if memo.isEmpty {
-                                Text("일정 관련 메모를 적어주세요")
+                        VStack(alignment: .leading, spacing: 10) {
+                            ZStack(alignment: .topLeading) {
+                                if memo.isEmpty {
+                                    Text("일정 관련 메모를 적어주세요")
+                                        .font(Theme.Typography.bodyM)
+                                        .foregroundColor(Color(hex: "#C4C4C4"))
+                                        .padding(20)
+                                }
+                                
+                                TextEditor(text: $memo)
                                     .font(Theme.Typography.bodyM)
-                                    .foregroundColor(Color(hex: "#C4C4C4"))
-                                    .padding(.horizontal, Theme.Spacing.lg)
-                                    .padding(.top, 16)
+                                    .foregroundColor(Theme.Colors.text)
+                                    .padding(20)
+                                    .scrollContentBackground(.hidden)
                             }
-                            
-                            TextEditor(text: $memo)
-                                .font(Theme.Typography.bodyM)
-                                .foregroundColor(Theme.Colors.text)
-                                .frame(height: 120)
-                                .padding(.horizontal, Theme.Spacing.md)
-                                .scrollContentBackground(.hidden)
                         }
-                        .background(Theme.Colors.background)
+                        .frame(maxWidth: .infinity, minHeight: isAllDay ? 260 : 205, alignment: .topLeading)
+                        .background(Color(red: 0.96, green: 0.97, blue: 0.97))
+                        .padding(.horizontal, Theme.Spacing.lg)
                         
                         Spacer()
                         
@@ -237,20 +217,25 @@ struct AddScheduleView: View {
                         }
                         
                         // Action Buttons
-                        HStack(spacing: 12) {
+                        HStack(spacing: 160) {
                             Button(action: {
                                 dismiss()
                             }) {
-                                Text("닫기")
-                                    .font(Theme.Typography.bodyM)
-                                    .foregroundColor(Theme.Colors.text)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 25)
-                                            .stroke(Theme.Colors.black, lineWidth: 1)
-                                    )
+                                HStack(alignment: .center, spacing: 10) {
+                                    Text("닫기")
+                                        .font(Theme.Typography.boldM)
+                                        .foregroundColor(Theme.Colors.text)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .frame(width: 100, height: 40, alignment: .center)
+                                .background(Color.clear)
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .inset(by: 0.5)
+                                        .stroke(Theme.Colors.black, lineWidth: 1)
+                                )
                             }
                             .disabled(isSaving)
                             
@@ -259,41 +244,95 @@ struct AddScheduleView: View {
                                     await saveSchedule()
                                 }
                             }) {
-                                Text(isSaving ? "저장 중..." : "저장")
-                                    .font(Theme.Typography.bodyM)
-                                    .foregroundColor(Theme.Colors.black)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(title.isEmpty || isSaving ? Color(hex: "#D9D9D9") : Theme.Colors.mainYellow)
-                                    .clipShape(RoundedRectangle(cornerRadius: 25))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 25)
-                                            .stroke(Theme.Colors.black, lineWidth: 1)
-                                    )
+                                HStack(alignment: .center, spacing: 10) {
+                                    Text(isSaving ? "저장 중..." : "저장")
+                                        .font(Theme.Typography.boldM)
+                                        .foregroundColor(Theme.Colors.black)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .frame(width: 100, height: 40, alignment: .center)
+                                .background(title.isEmpty || isSaving ? Color(hex: "#D9D9D9") : Theme.Colors.mainYellow)
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .inset(by: 0.5)
+                                        .stroke(Theme.Colors.black, lineWidth: 1)
+                                )
                             }
                             .disabled(title.isEmpty || isSaving)
                         }
                         .padding(.horizontal, Theme.Spacing.lg)
                         .padding(.bottom, Theme.Spacing.lg)
-                    }
-                    .padding(.top, Theme.Spacing.md)
                 }
+                .padding(.top, Theme.Spacing.md)
             }
-            .navigationTitle("일정 추가")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { 
-                        dismiss() 
+            .padding(.horizontal, 20)
+            
+            if showTagPicker {
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showTagPicker = false
                     }
-                    .disabled(isSaving)
+                
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        HStack(spacing: 16) {
+                            ForEach([ScheduleTag.YELLOW, ScheduleTag.GREEN, ScheduleTag.BLUE], id: \.self) { tag in
+                                Button(action: {
+                                    selectedTag = tag
+                                    showTagPicker = false
+                                }) {
+                                    Circle()
+                                        .fill(tagColorFor(tag))
+                                        .frame(width: 30, height: 30)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(tagColorFor(tag), lineWidth: selectedTag == tag ? 2.5 : 0)
+                                                .frame(width: 36, height: 36)
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 14)
+                        .background(Theme.Colors.white)
+                        .cornerRadius(15)
+                        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 2)
+                        
+                        Spacer().frame(width: 50)
+                    }
+                    .padding(.top, 60)
+                    
+                    Spacer()
                 }
             }
         }
+        .navigationBarHidden(true)
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 100 {
+                        dismiss()
+                    }
+                }
+        )
     }
     
     private var selectedTagColor: Color {
         switch selectedTag {
+        case .YELLOW: return Theme.Colors.mainYellow
+        case .GREEN: return .green
+        case .BLUE: return Theme.Colors.blue
+        }
+    }
+    
+    private func tagColorFor(_ tag: ScheduleTag) -> Color {
+        switch tag {
         case .YELLOW: return Theme.Colors.mainYellow
         case .GREEN: return .green
         case .BLUE: return Theme.Colors.blue
@@ -346,6 +385,16 @@ struct AddScheduleView: View {
         do {
             let scheduleId = try await ScheduleAPIService.shared.createSchedule(groupId: groupId, request: request)
             print("✅ Schedule created with ID: \(scheduleId)")
+            
+            // Schedule local notification if reminder time is set
+            if let reminderTime = reminderTime, reminderTime > Date() {
+                NotificationManager.shared.scheduleCalendarReminder(
+                    scheduleId: scheduleId,
+                    title: title,
+                    remindNotificationAt: reminderTime
+                )
+            }
+            
             dismiss()
             onSave()
         } catch let error as APIError {

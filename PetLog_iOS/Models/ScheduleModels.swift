@@ -94,13 +94,25 @@ struct CreateScheduleRequest: Codable {
 struct PatchScheduleRequest: Codable {
     let title: String?
     let isAllDay: Bool?
-    let startAt: String?
-    let endAt: String?
+    let startTime: String?
+    let endTime: String?
     let tag: ScheduleTag?
     let remindNotificationAt: String?
     let memo: String?
     
     enum CodingKeys: String, CodingKey {
-        case title, isAllDay, startAt, endAt, tag, remindNotificationAt, memo
+        case title, isAllDay, startTime, endTime, tag, remindNotificationAt, memo
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(title, forKey: .title)
+        try container.encodeIfPresent(isAllDay, forKey: .isAllDay)
+        try container.encodeIfPresent(startTime, forKey: .startTime)
+        try container.encodeIfPresent(endTime, forKey: .endTime)
+        try container.encodeIfPresent(tag, forKey: .tag)
+        // Always encode remindNotificationAt (backend requires it)
+        try container.encode(remindNotificationAt ?? "", forKey: .remindNotificationAt)
+        try container.encodeIfPresent(memo, forKey: .memo)
     }
 }
