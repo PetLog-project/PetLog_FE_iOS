@@ -746,7 +746,7 @@ struct FigmaAppHeader: View {
                 Button {
                     showNotesView = true
                 } label: {
-                    Image("octicon_mortar_board_24")
+                    Image("majesticons_megaphone-line")
                         .resizable()
                         .frame(width: 24, height: 24)
                         .foregroundColor(Theme.Colors.text)
